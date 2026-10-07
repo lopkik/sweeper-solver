@@ -3,7 +3,6 @@ import numpy.typing as npt
 from constraint import ExactSumConstraint, Problem
 from neighborUtils import getBoardCoveredNeighborsSet, getBoardNeighborFlagCount, getBoardNeighborMineCount, getNeighborCellSet
 
-
 # Cell type is:
 #   -1 for Mines
 #    0 for Empty
@@ -78,20 +77,19 @@ def getUnsolvedCells(cell_status_board: npt.NDArray[np.int_]) -> set[tuple[int, 
 
   return unsolvedCells
 
-def checkSolvability(mineCount, cellSumDict) -> bool:
-  printCellBoard(9, 9, cellSumDict)
+def checkSolvability(mineCount, cellSumBoard) -> bool:
+  print("Checking solvability...", f"Mine count: {mineCount}", f"Flag Count: {np.count_nonzero(cellSumBoard == -3)}", sep="\n")
+  return np.count_nonzero(cellSumBoard == -3) == mineCount
 
-  return True
-
-def constraintSolver(unsolvedCells, remainingMineCount, cellStatusDict, cellSumDict) -> tuple[set[tuple], set[tuple]]:
+def constraintSolver(unsolvedCells, remainingMineCount, cellStatusBoard, cellSumBoard) -> tuple[set[tuple], set[tuple]]:
   variables = set()
   problem = Problem()
 
   for cell in unsolvedCells:
-    covered_neighbors = getBoardCoveredNeighborsSet(cell, cellStatusDict)
+    covered_neighbors = getBoardCoveredNeighborsSet(cell, cellStatusBoard)
     for neighbor in covered_neighbors:
       variables.add(neighbor)
-    problem.addConstraint(ExactSumConstraint(cellSumDict[cell]), list(covered_neighbors))
+    problem.addConstraint(ExactSumConstraint(cellSumBoard[cell]), list(covered_neighbors))
 
   problem.addVariables(list(variables), [0, 1])  # 0 for safe, 1 for mine
   solutions = problem.getSolutions()
@@ -119,13 +117,12 @@ def constraintSolver(unsolvedCells, remainingMineCount, cellStatusDict, cellSumD
   return safe_cells, mines
 
 def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[tuple]) -> bool:
-  # set of opened, safe cells that have at least covered neighbor
-  unsolvedCells = set()
   cellTypeBoard = getCellTypeBoard(height, width, mine_positions)
   cellStatusBoard = getStartingCellStatusBoard(height, width)
   cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
 
   openCell(start_cell, cellTypeBoard, cellStatusBoard)
+  # set of opened, safe cells that have at least covered neighbor
   unsolvedCells = getUnsolvedCells(cellStatusBoard)
   cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
   flagCount = 0
