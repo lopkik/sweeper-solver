@@ -112,8 +112,21 @@ def constraintSolver(unsolvedCells, remainingMineCount, cellStatusBoard, cellSum
         elif validSolns[0][covered_cell] == 1:
           mines.add(covered_cell)
 
-  print(f"Safe cells: {safe_cells}")
-  print(f"Mines: {mines}")
+  print(f"  Safe cells: {safe_cells}")
+  print(f"  Mines: {mines}")
+  return safe_cells, mines
+
+def easyMoves(unsolvedCells: set[tuple], cellStatusBoard: npt.NDArray[np.int_], cellSumBoard: npt.NDArray[np.int_]) -> tuple[set[tuple], set[tuple]]:
+  safe_cells = set()
+  mines = set()
+
+  for cell in unsolvedCells:
+    covered_neighbors = getBoardCoveredNeighborsSet(cell, cellStatusBoard)
+    if cellSumBoard[cell] == 0:
+      safe_cells.update(covered_neighbors)
+    elif len(covered_neighbors) == cellSumBoard[cell]:
+      mines.update(covered_neighbors)
+
   return safe_cells, mines
 
 def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[tuple]) -> bool:
@@ -128,9 +141,24 @@ def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[
   flagCount = 0
 
   while True:
+    safe_cells, mines = easyMoves(unsolvedCells, cellStatusBoard, cellSumBoard)
+    while safe_cells or mines:
+      print("Easy moves found:")
+      print(f"  Safe cells: {safe_cells}")
+      print(f"  Mines: {mines}")
+      for safe_cell in safe_cells:
+        openCell(safe_cell, cellTypeBoard, cellStatusBoard)
+      for mine in mines:
+        flagCell(mine, cellStatusBoard)
+        flagCount += 1
+
+      unsolvedCells = getUnsolvedCells(cellStatusBoard)
+      cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
+      safe_cells, mines = easyMoves(unsolvedCells, cellStatusBoard, cellSumBoard)
+
     safe_cells, mines = constraintSolver(unsolvedCells, len(mine_positions) - flagCount, cellStatusBoard, cellSumBoard)
     for safe_cell in safe_cells:
-      openCell(safe_cell, cellTypeBoard, cellStatusBoard  )
+      openCell(safe_cell, cellTypeBoard, cellStatusBoard)
     for mine in mines:
       flagCell(mine, cellStatusBoard)
       flagCount += 1
