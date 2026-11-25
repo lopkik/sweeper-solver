@@ -78,7 +78,7 @@ def getUnsolvedCells(cell_status_board: npt.NDArray[np.int_]) -> set[tuple[int, 
   return unsolvedCells
 
 def checkSolvability(mineCount, cellSumBoard) -> bool:
-  print("Checking solvability...", f"Mine count: {mineCount}", f"Flag Count: {np.count_nonzero(cellSumBoard == -3)}", sep="\n")
+  # print("Checking solvability...", f"Mine count: {mineCount}", f"Flag Count: {np.count_nonzero(cellSumBoard == -3)}", sep="\n")
   return np.count_nonzero(cellSumBoard == -3) == mineCount
 
 def constraintSolver(unsolvedCells, remainingMineCount, cellStatusBoard, cellSumBoard) -> tuple[set[tuple], set[tuple]]:
@@ -93,7 +93,7 @@ def constraintSolver(unsolvedCells, remainingMineCount, cellStatusBoard, cellSum
 
   problem.addVariables(list(variables), [0, 1])  # 0 for safe, 1 for mine
   solutions = problem.getSolutions()
-  print(solutions)
+  # print(solutions)
 
   safe_cells = set()
   mines = set()
@@ -112,8 +112,8 @@ def constraintSolver(unsolvedCells, remainingMineCount, cellStatusBoard, cellSum
         elif validSolns[0][covered_cell] == 1:
           mines.add(covered_cell)
 
-  print(f"  Safe cells: {safe_cells}")
-  print(f"  Mines: {mines}")
+  # print(f"  Safe cells: {safe_cells}")
+  # print(f"  Mines: {mines}")
   return safe_cells, mines
 
 def easyMoves(unsolvedCells: set[tuple], cellStatusBoard: npt.NDArray[np.int_], cellSumBoard: npt.NDArray[np.int_]) -> tuple[set[tuple], set[tuple]]:
@@ -129,7 +129,7 @@ def easyMoves(unsolvedCells: set[tuple], cellStatusBoard: npt.NDArray[np.int_], 
 
   return safe_cells, mines
 
-def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[tuple]) -> bool:
+def getForcedGuessCount(height: int, width: int, start_cell: tuple, mine_positions: list[tuple]) -> int:
   cellTypeBoard = getCellTypeBoard(height, width, mine_positions)
   cellStatusBoard = getStartingCellStatusBoard(height, width)
   cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
@@ -144,9 +144,9 @@ def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[
   while True:
     safe_cells, mines = easyMoves(unsolvedCells, cellStatusBoard, cellSumBoard)
     while safe_cells or mines:
-      print("Easy moves found:")
-      print(f"  Safe cells: {safe_cells}")
-      print(f"  Mines: {mines}")
+      # print("Easy moves found:")
+      # print(f"  Safe cells: {safe_cells}")
+      # print(f"  Mines: {mines}")
       for safe_cell in safe_cells:
         openCell(safe_cell, cellTypeBoard, cellStatusBoard)
       for mine in mines:
@@ -166,12 +166,19 @@ def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[
 
     newUnsolvedCells = getUnsolvedCells(cellStatusBoard)
     if newUnsolvedCells == unsolvedCells or flagCount == len(mine_positions):
-      # no new moves can be made
-      # add a forced guess if there are still unsolved cells
-      if unsolvedCells:
-        print("No new moves can be made, adding a forced guess...")
-        unsolvedSafeCells = unsolvedCells - set(mine_positions)
-        guess_cell = next(iter(unsolvedSafeCells))
+      if flagCount == len(mine_positions):
+        break
+      elif newUnsolvedCells:
+        # print("No new moves can be made, adding a forced guess...")
+        unopenedSafeCells = {
+          (i, j)
+          for i in range(height)
+          for j in range(width)
+          if cellStatusBoard[(i, j)] == -2 and (i, j) not in mine_positions
+        }
+        if not unopenedSafeCells:
+          raise RuntimeError("No covered safe cell is available for a forced guess")
+        guess_cell = min(unopenedSafeCells)
         openCell(guess_cell, cellTypeBoard, cellStatusBoard)
         forcedGuessCount += 1
       else:
@@ -179,7 +186,7 @@ def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[
     unsolvedCells = newUnsolvedCells
     cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
 
-  return checkSolvability(len(mine_positions), cellSumBoard)
+  return forcedGuessCount
 
 def printCellBoard(height, width, cell_dict):
   for i in range(height):
@@ -187,7 +194,17 @@ def printCellBoard(height, width, cell_dict):
       print(str(cell_dict[(i, j)]).rjust(2), end=' ')
     print()
 
-# print(getCellTypeDict(9, 9, [(1,1), (2,2), (3,3)]))
-printCellBoard(9, 9, getCellTypeBoard(9, 9, [(1,1), (2,2), (3,3)]))
+def printCellConfig(height, width, start_cell, mine_positions):
+  cellTypeBoard = getCellTypeBoard(height, width, mine_positions)
+  cellStatusBoard = getStartingCellStatusBoard(height, width)
+  openCell(start_cell, cellTypeBoard, cellStatusBoard)
+  print("Cell Type Board:")
+  printCellBoard(height, width, cellTypeBoard)
+  print("Cell Status Board:")
+  printCellBoard(height, width, cellStatusBoard)
 
-isSolvable(9, 9, (5,5), [(1,1), (2,2), (3,3)])
+# print(getCellTypeDict(9, 9, [(1,1), (2,2), (3,3)]))
+if __name__ == "__main__":
+  printCellBoard(9, 9, getCellTypeBoard(9, 9, [(1,1), (2,2), (3,3)]))
+
+  getForcedGuessCount(9, 9, (5,5), [(1,1), (2,2), (3,3)])

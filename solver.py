@@ -1,10 +1,6 @@
 from constraint import ExactSumConstraint, Problem
 from neighborUtils import getCoveredNeighborsSet, getNeighborMineCount, getNeighborFlagCount, getNeighborCellSet
 
-type MinesweeperInstance = tuple[int, int, tuple[int, int], list[tuple[int, int]]]
-
-minesweeper_instance: MinesweeperInstance = (9, 9, (5, 5), [(1,1), (2,2), (3,3), (1,2), (2,1), (9,9), (8,8), (7,7)])
-
 # Cell type is:
 #   -1 for Mines
 #    0 for Empty
@@ -113,8 +109,8 @@ def constraintSolver(height, width, unsolvedCells, cellStatusDict, cellSumDict) 
       # the number of mines left to flag
       mines.add(covered_cell)
 
-  print(f"Safe cells: {safe_cells}")
-  print(f"Mines: {mines}")
+  # print(f"Safe cells: {safe_cells}")
+  # print(f"Mines: {mines}")
   return safe_cells, mines
 
 def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[tuple]) -> bool:
