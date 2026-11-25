@@ -139,6 +139,7 @@ def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[
   unsolvedCells = getUnsolvedCells(cellStatusBoard)
   cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
   flagCount = 0
+  forcedGuessCount = 0
 
   while True:
     safe_cells, mines = easyMoves(unsolvedCells, cellStatusBoard, cellSumBoard)
@@ -164,8 +165,17 @@ def isSolvable(height: int, width: int, start_cell: tuple, mine_positions: list[
       flagCount += 1
 
     newUnsolvedCells = getUnsolvedCells(cellStatusBoard)
-    if newUnsolvedCells == unsolvedCells:
-      break
+    if newUnsolvedCells == unsolvedCells or flagCount == len(mine_positions):
+      # no new moves can be made
+      # add a forced guess if there are still unsolved cells
+      if unsolvedCells:
+        print("No new moves can be made, adding a forced guess...")
+        unsolvedSafeCells = unsolvedCells - set(mine_positions)
+        guess_cell = next(iter(unsolvedSafeCells))
+        openCell(guess_cell, cellTypeBoard, cellStatusBoard)
+        forcedGuessCount += 1
+      else:
+        break
     unsolvedCells = newUnsolvedCells
     cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
 
