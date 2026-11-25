@@ -1,4 +1,5 @@
 from collections import Counter
+import math
 import numpy as np
 import statistics
 import time
@@ -22,15 +23,17 @@ def run_board(height: int, width: int, mine_count: int, runs: int):
     min_guesses = min(min_guesses, forced_guess_count)
     max_guesses = max(max_guesses, forced_guess_count)
 
-    if (i + 1) % 5 == 0:
+    if (i + 1) % 500 == 0:
       print(f"Completed {i + 1} runs...")
 
-  print(f"Avg forced guess count for {height}x{width} board with {mine_count} mines: {total_forced_guesses / runs}")
-  print(f"Avg forced guess count sans no guess runs: {total_forced_guesses / (runs - forced_guess_counts[0])}")
-  print(f"Forced guess count std dev: {statistics.stdev(forced_guess_counts.elements()):.4f}")
-  print(f"Forced guess count distribution: {sorted(dict(forced_guess_counts).items())}")
-  print(f"Min forced guesses: {min_guesses}")
-  print(f"Max forced guesses: {max_guesses}")
+  print("AVG FG, AVG FG sans NG runs, FG std dev, Min FG, Max FG")
+  print(f"{total_forced_guesses / runs:.4f}, {total_forced_guesses / (runs - forced_guess_counts[0]):.4f}, {statistics.stdev(forced_guess_counts.elements()):.4f}, {min_guesses}, {max_guesses}")
+  # print(f"Avg forced guess count for {height}x{width} board with {mine_count} mines: {total_forced_guesses / runs}")
+  # print(f"Avg forced guess count sans no guess runs: {total_forced_guesses / (runs - forced_guess_counts[0])}")
+  # print(f"Forced guess count std dev: {statistics.stdev(forced_guess_counts.elements()):.4f}")
+  # print(f"Forced guess count distribution: {sorted(dict(forced_guess_counts).items())}")
+  # print(f"Min forced guesses: {min_guesses}")
+  # print(f"Max forced guesses: {max_guesses}")
 
 
 # Beginner boards (9x9 with 10 mines)
@@ -46,16 +49,48 @@ def run_board(height: int, width: int, mine_count: int, runs: int):
 # print(f"Time elapsed for intermediate boards: {end - start:.4f} seconds")
 
 # Expert boards (16x30 with 99 mines)
-start = time.perf_counter()
-run_board(16, 30, 99, 1000)
-end = time.perf_counter()
-print(f"Time elapsed for expert boards: {end - start:.4f} seconds")  
+# start = time.perf_counter()
+# run_board(16, 30, 99, 5000)
+# end = time.perf_counter()
+# print(f"Time elapsed for expert boards: {end - start:.4f} seconds")  
 
 # Beginner Density Change
 # start = time.perf_counter()
 # ten_percent_density = round(9 * 9 * 0.1)
-# thirty_percent_density = round(9 * 9 * 0.3)
+# thirty_percent_density = math.ceil(9 * 9 * 0.31)
 # for i in range(ten_percent_density, thirty_percent_density + 1):
+#   print(f"Running {i} mines ({i / (9 * 9) * 100:.1f}%) on 9x9 board...")
 #   run_board(9, 9, i, 1000)
+#   print('-----------------------------------------------------------------')
 # end = time.perf_counter()
 # print(f"Time elapsed for beginner density change: {end - start:.4f} seconds")
+
+# Intermediate Density Change
+# start = time.perf_counter()
+# for i in range(20):
+#   mine_count = round(256 * (0.1 + 0.01 * i))
+#   print(f"Running {mine_count} mines ({mine_count / 256 * 100:.1f}%) on 16x16 board...")
+#   run_board(16, 16, mine_count, 1000)
+#   print('-----------------------------------------------------------------')
+# end = time.perf_counter()
+# print(f"Time elapsed for intermediate density change: {end - start:.4f} seconds")
+
+# Expert Density Change
+# start = time.perf_counter()
+# for i in range(1):
+#   mine_count = round(480 * (0.1 + 0.01 * 20))
+#   print(f"Running {mine_count} mines ({mine_count / 480 * 100:.1f}%) on 16x30 board...")
+#   run_board(16, 30, mine_count, 1000)
+#   print('-----------------------------------------------------------------')
+# end = time.perf_counter()
+# print(f"Time elapsed for expert density change: {end - start:.4f} seconds")
+
+# Starting Position Check
+start = time.perf_counter()
+for i in range(9):
+  for j in range(9):
+    start_cell = (i, j)
+    print(f"Running 9x9 board with 14 mines starting at {start_cell}...")
+    run_board(9, 9, 14, 1000)
+    print('-----------------------------------------------------------------')
+end = time.perf_counter()

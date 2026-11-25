@@ -93,7 +93,6 @@ def constraintSolver(unsolvedCells, remainingMineCount, cellStatusBoard, cellSum
 
   problem.addVariables(list(variables), [0, 1])  # 0 for safe, 1 for mine
   solutions = problem.getSolutions()
-  # print(solutions)
 
   safe_cells = set()
   mines = set()
@@ -129,6 +128,40 @@ def easyMoves(unsolvedCells: set[tuple], cellStatusBoard: npt.NDArray[np.int_], 
 
   return safe_cells, mines
 
+def divideIntoAreas(unsolvedCells: set[tuple], cellSumBoard: npt.NDArray[np.int_]) -> list[set]:
+  areas = []
+
+  for cell in unsolvedCells:
+    coveredNeighborCells = getBoardCoveredNeighborsSet(cell, cellSumBoard)
+    connectedAreas = set()
+
+    for area in areas:
+      if coveredNeighborCells.intersection(area):
+        area.add(cell)
+        connectedAreas.add(area)
+
+    if len(connectedAreas) > 1:
+      for a in connectedAreas:
+        areas.remove(a)
+      newArea = set().union(*connectedAreas)
+      areas.append(newArea)
+    if len(connectedAreas) == 0:
+      newArea = set()
+      newArea.add(cell)
+      areas.append(newArea)
+
+  return areas
+
+def constraintSolverExtension(unsolvedCells, remainingMineCount, cellStatusBoard, cellSumBoard) -> tuple[set[tuple], set[tuple]]:
+  areas = divideIntoAreas(unsolvedCells, cellSumBoard)
+
+  for area in areas:
+    areaSafeCells, areaMines = constraintSolver(area, remainingMineCount, cellStatusBoard, cellSumBoard)
+    if areaSafeCells or areaMines:
+      return areaSafeCells, areaMines
+
+  return set(), set()
+
 def getForcedGuessCount(height: int, width: int, start_cell: tuple, mine_positions: list[tuple]) -> int:
   cellTypeBoard = getCellTypeBoard(height, width, mine_positions)
   cellStatusBoard = getStartingCellStatusBoard(height, width)
@@ -157,7 +190,7 @@ def getForcedGuessCount(height: int, width: int, start_cell: tuple, mine_positio
       cellSumBoard = getCellSumBoard(cellTypeBoard, cellStatusBoard)
       safe_cells, mines = easyMoves(unsolvedCells, cellStatusBoard, cellSumBoard)
 
-    safe_cells, mines = constraintSolver(unsolvedCells, len(mine_positions) - flagCount, cellStatusBoard, cellSumBoard)
+    safe_cells, mines = constraintSolverExtension(unsolvedCells, len(mine_positions) - flagCount, cellStatusBoard, cellSumBoard)
     for safe_cell in safe_cells:
       openCell(safe_cell, cellTypeBoard, cellStatusBoard)
     for mine in mines:
